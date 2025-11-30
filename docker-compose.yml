@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres-cliente:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cliente_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-cliente-data:/var/lib/postgresql/data
+
+  postgres-cuenta:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cuenta_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-cuenta-data:/var/lib/postgresql/data
+
+  cliente-service:
+    build: ./cliente-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cliente:5432/cliente_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      - postgres-cliente
+
+  cuenta-service:
+    build: ./cuenta-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cuenta:5432/cuenta_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      CLIENTE_SERVICE_URL: http://cliente-service:8081
+    depends_on:
+      - postgres-cuenta
+      - cliente-service
+
+volumes:
+  postgres-cliente-data:
+  postgres-cuenta-data:
